@@ -1,4 +1,4 @@
-const CACHE_NAME = '{{VENDOR}}-v1';
+const CACHE_NAME = 'testclean2-v1';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
