@@ -6,16 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
   <title>testclean2 - Catalogue</title>
   
-  <!-- MÃ©tadonnÃ©es dynamiques -->
   <meta name="description" content="Boutique testclean2 - Commandez en ligne" />
   <meta property="og:title" content="testclean2 - Catalogue" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://mekeirish.github.io/hanout-testclean2/" />
   <meta property="og:description" content="Boutique testclean2 - Commandez en ligne" />
   <meta name="theme-color" content="#0f172a" />
-  
-  <!-- Pas de favicon par dÃ©faut (tu peux en ajouter un gÃ©nÃ©rique) -->
-  <!-- <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ðª</text></svg>" /> -->
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -189,7 +185,7 @@
     }
   };
 
-  // ---- TEXTES STATIQUES (tous en entitÃ©s HTML) ----
+  // ---- TEXTES STATIQUES (en entitÃ©s HTML) ----
   var TEXTS = {
     admin: "Admin",
     cart: "Panier",
@@ -290,7 +286,7 @@
   };
 
   function App() {
-    // ---- CONSTANTES INJECTÃES ----
+    // ---- CONSTANTES ----
     var VENDOR = "testclean2";
     var isPlaceholder = VENDOR.startsWith("{{");
 
@@ -766,6 +762,7 @@
       }, '*');
     };
 
+    // ---- CHECKOUT (avec enregistrement direct dans Firebase) ----
     var checkout = async function() {
       if (cart.length === 0) { alert(decodeEntities(TEXTS.cartEmpty)); return; }
       if (!sogUser) {
@@ -777,8 +774,32 @@
         return;
       }
 
+      // ---- ENREGISTREMENT DIRECT DANS FIREBASE ----
+      try {
+        await db.ref('orders').push({
+          userId: sogUser.uid,
+          vendor: vendeur,
+          items: cart.map(function(i) { return { name: i.name, quantity: i.quantity, price: i.price }; }),
+          total: parseFloat(getTotal()),
+          currency: editableData?.settings?.currency || "DZD",
+          status: 'pending',
+          createdAt: new Date().toISOString(),
+          customerName: order.name,
+          customerPhone: order.phone,
+          customerAddress: order.address,
+          comments: order.comments || ""
+        });
+        console.log('â Commande enregistrÃ©e dans Firebase');
+      } catch (err) {
+        console.error('â Erreur Firebase:', err);
+        alert('Erreur lors de l\'enregistrement de la commande.');
+        return;
+      }
+
+      // ---- ENVOI Ã SOG (pour synchronisation) ----
       sendOrderToSOG(order);
 
+      // ---- NOTIFICATION NTFY ----
       var topic = editableData?.settings?.ntfyTopic;
       if (topic) {
         var currencySymbol = editableData?.settings?.currency || "â¬";
@@ -1147,7 +1168,6 @@
 
         {/* ---- MODALS ---- */}
 
-        {/* Modal de connexion Firebase */}
         {showLoginModal && (
           <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 modal-animate" onClick={function() { setShowLoginModal(false); }}>
             <div className="glass-modal max-w-md w-full p-6 rounded-2xl shadow-2xl" onClick={function(e) { e.stopPropagation(); }}>
