@@ -1,0 +1,10 @@
+{
+  "settings": {
+    "title": "Boutique de testclean2",
+    "currency": "DZD",
+    "showStock": true,
+    "ntfyTopic": "testclean2_commandes"
+  },
+  "categories": [],
+  "products": []
+}
